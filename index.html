@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Поиски славы и удачи — лист персонажа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #e6ddc7;
+    --paper-dark: #d8cba9;
+    --paper-line: #b6a578;
+    --ink: #2a241c;
+    --ink-soft: #5c503e;
+    --blood: #6e2b2b;
+    --blood-light: #8a3a3a;
+    --iron: #47535c;
+    --iron-light: #63737f;
+    --verdigris: #4f6b5b;
+    --gold: #8a6b30;
+    --font-h: 'IM Fell English SC', Georgia, serif;
+    --font-hi: 'IM Fell English', Georgia, serif;
+    --font-b: 'EB Garamond', Georgia, serif;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    padding:28px 16px 60px;
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size: 3px 3px;
+    color: var(--ink);
+    font-family: var(--font-b);
+    font-size:16px;
+  }
+
+  .sheet{
+    max-width: 900px;
+    margin: 0 auto;
+    background: var(--paper);
+  }
+
+  /* ---------- header ---------- */
+  .masthead{
+    display:grid;
+    grid-template-columns: auto 1fr;
+    gap: 18px 24px;
+    align-items:start;
+    padding-bottom: 8px;
+    border-bottom: 3px double var(--ink-soft);
+    margin-bottom: 12px;
+  }
+  .seal-wrap{ width:96px; height:96px; opacity:0.92; }
+  .seal-wrap svg{ width:100%; height:100%; }
+  .seal-ring-text{
+    font-family: var(--font-h);
+    font-size: 12.5px;
+    letter-spacing: 1px;
+    fill: var(--blood);
+  }
+  .seal-star{ fill:none; stroke: var(--blood); stroke-width:2.2; }
+  .seal-outer{ fill:none; stroke: var(--blood); stroke-width:1.4; }
+  .seal-dot{ fill: var(--blood); }
+
+  .title-block{ min-width:0; }
+  .game-title{
+    font-family: var(--font-h);
+    font-weight:400;
+    font-size: 30px;
+    letter-spacing: 1px;
+    margin: 0 0 2px;
+    color: var(--ink);
+  }
+  .subtitle{
+    margin: 0 0 12px;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 15px;
+  }
+  .name-row{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .name-row label{ font-family: var(--font-h); font-size:14px; color:var(--ink-soft); white-space:nowrap; }
+  .name-input{ flex:1; min-width:220px; font-size:22px; font-family: var(--font-hi); }
+
+  .quickref{
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--paper-line);
+    padding-top: 8px;
+    display:flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    align-items:center;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+  .quickref b{ font-family: var(--font-h); color:var(--ink); font-size:13px; margin-right:2px;}
+  .quickref span{ white-space:nowrap; }
+  .quickref span em{ color:var(--blood); font-style:normal; font-weight:600; }
+  .quickref .quickref-note{ white-space:normal; flex-basis:100%; font-style:italic; }
+
+  /* ---------- section framing ---------- */
+  .section{ margin-bottom: 10px; }
+  .section-title{
+    font-family: var(--font-h);
+    font-size: 16px;
+    letter-spacing: 1.5px;
+    color: var(--ink-soft);
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin: 0 0 8px;
+  }
+  .section-title::before{ content:"✦"; color: var(--blood); font-size:12px; }
+  .hint{ font-size:12.5px; color: var(--ink-soft); font-style:italic; margin: -4px 0 8px; }
+
+  .panel{
+    border: 1px solid var(--paper-line);
+    background: rgba(255,255,255,0.12);
+    padding: 8px 10px 10px;
+    border-radius: 2px;
+  }
+
+  .grid-2{ display:grid; grid-template-columns: 1fr; gap:16px; }
+  @media (min-width:700px){ .grid-2{ grid-template-columns: 1fr 1fr; } }
+
+  /* ---------- fields ---------- */
+  label.field-label{
+    display:block;
+    font-family: var(--font-h);
+    font-size: 11.5px;
+    letter-spacing: 0.5px;
+    color: var(--ink-soft);
+    margin-bottom: 2px;
+  }
+  .field{ margin-bottom: 6px; }
+  .field:last-child{ margin-bottom:0; }
+
+  input[type=text], input[type=number]{
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--paper-line);
+    font-family: var(--font-b);
+    font-size: 16px;
+    color: var(--ink);
+    padding: 3px 2px;
+  }
+  input[type=text]:focus, input[type=number]:focus, textarea:focus, select:focus{
+    outline:none;
+    border-color: var(--blood);
+  }
+  input[type=number]{ width: 56px; text-align:center; }
+  input[readonly]{ color: var(--ink-soft); cursor: default; border-bottom-style: dashed; }
+
+  select{
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--paper-line);
+    font-family: var(--font-b);
+    font-size: 15px;
+    color: var(--ink);
+    padding: 3px 2px;
+  }
+
+  textarea{
+    width:100%;
+    background: transparent;
+    border: none;
+    resize: vertical;
+    font-family: var(--font-b);
+    font-size: 15.5px;
+    color: var(--ink);
+    line-height: 1.5em;
+    background-image: linear-gradient(var(--paper-line) 1px, transparent 1px);
+    background-size: 100% 1.5em;
+    padding-top: 2px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  ::placeholder{ color: var(--ink-soft); opacity:0.55; font-style:italic; }
+
+  /* ---------- inline row fields ---------- */
+  .inline-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+  .inline-row label.field-label{ margin:0; }
+  .inline-row .field{ flex:1; min-width:140px; margin-bottom:0; }
+  .inline-row .mod-field{ flex:0 0 74px; min-width:74px; }
+  .inline-row .mod-field input{ text-align:center; }
+
+  .check-line{
+    display:flex; align-items:center; gap:6px;
+    font-size:13px; color:var(--ink-soft); margin-top:6px;
+  }
+
+  /* ---------- wounds / exhaustion pips ---------- */
+  .pip-row{ display:flex; gap:5px; flex-wrap:wrap; margin: 6px 0; }
+  .pip{ display:inline-flex; cursor:pointer; }
+  .pip input{ appearance:none; -webkit-appearance:none; width:18px; height:18px;
+    border:2px solid var(--ink-soft); border-radius:50%; margin:0; position:relative; cursor:pointer;
+    background: transparent;
+  }
+  .pip.wound input:checked{ border-color: var(--blood); }
+  .pip.wound input:checked::after{
+    content:"✕"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:14px; color: var(--blood); font-family: var(--font-b);
+  }
+  .pip.exh input{ border-color: var(--iron); }
+  .pip.exh input:checked::after{
+    content:"◆"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; color: var(--iron); font-family: var(--font-b);
+  }
+  .pip.mark input{ width:20px; height:20px; border-color: var(--verdigris); }
+  .pip.mark input:checked::after{
+    content:"●"; position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:10px; color: var(--verdigris); font-family: var(--font-b);
+  }
+  .bonus-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .status-line{ font-size: 14px; font-style: italic; color: var(--ink-soft); min-height: 1.4em; }
+  .status-line.warn{ color: var(--blood); font-weight:600; font-style:normal; }
+
+  .pip-config{ display:flex; align-items:center; gap:6px; font-size:13px; color:var(--ink-soft); margin-bottom:2px;}
+  .pip-config label{ font-family: var(--font-h); letter-spacing:0.5px; }
+
+  /* ---------- tables ---------- */
+  table.eq-table{ width:100%; border-collapse: collapse; font-size:14.5px; }
+  table.eq-table th{
+    font-family: var(--font-h); font-weight:400; letter-spacing:0.5px;
+    text-align:left; color: var(--ink-soft); font-size:12.5px;
+    border-bottom:1px solid var(--ink-soft); padding: 2px 6px 4px;
+  }
+  table.eq-table td{ padding: 3px 6px; border-bottom: 1px solid var(--paper-line); }
+  table.eq-table input[type=text]{ border-bottom:none; padding:2px; }
+  table.eq-table td.narrow{ width: 90px; }
+  table.eq-table textarea.spec{
+    display:block;
+    width:100%;
+    background:transparent;
+    background-image:none;
+    border:none;
+    padding:2px;
+    font-family: var(--font-b);
+    font-size:14.5px;
+    line-height:1.25;
+    color: var(--ink);
+    resize:none;
+    overflow:hidden;
+    min-height:1.25em;
+  }
+
+  .equip-list{ display:grid; grid-template-columns: 1fr 1fr; column-gap: 20px; row-gap:6px; }
+  @media (max-width:680px){ .equip-list{ grid-template-columns: 1fr; } }
+  .equip-line{ display:flex; align-items:baseline; gap:6px; min-width:0; }
+  .equip-line span{ color: var(--ink-soft); font-size:13px; flex-shrink:0; }
+  .equip-line input{ flex:1; min-width:0; }
+
+  .traits-list .equip-line span{ font-family: var(--font-h); font-size:13px; }
+
+  /* ---------- footer ---------- */
+  .actions{ margin-top: 22px; display:flex; gap:12px; flex-wrap:wrap; }
+  button{
+    font-family: var(--font-h);
+    letter-spacing: 1px;
+    font-size: 14px;
+    padding: 9px 18px;
+    border: 1px solid var(--ink-soft);
+    background: var(--paper-dark);
+    color: var(--ink);
+    border-radius: 2px;
+    cursor:pointer;
+  }
+  button:hover{ background: var(--blood); color: var(--paper); border-color: var(--blood); }
+  button.secondary:hover{ background: var(--iron); border-color: var(--iron); }
+
+  .colophon{ margin-top: 26px; text-align:center; font-size:11.5px; color: var(--ink-soft); font-style:italic; }
+
+  @media print{
+    body{ background: #fff; padding:0; }
+    .sheet{ max-width:100%; }
+    .no-print{ display:none !important; }
+    .panel{ background: transparent; }
+    .grid-2{ grid-template-columns:1fr 1fr; }
+    .quickref{ gap:6px; font-size:11px; padding-top:4px; }
+    .quickref b{ font-size:11px; }
+    input[type=text], input[type=number], textarea, select{ font-size:11px; }
+    table.eq-table textarea.spec{ font-size:11px; }
+    .section{ margin-bottom:6px; }
+    .section-title, .hint{ break-after: avoid; }
+    .field, .inline-row, .pip-config, .pip-row, .status-line, .bonus-row, .check-line,
+    .equip-line, table.eq-table tr{ break-inside: avoid; }
+    .colophon{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="seal-wrap">
+      <svg viewBox="0 0 220 220">
+        <circle class="seal-outer" cx="110" cy="110" r="94"/>
+        <circle class="seal-outer" cx="110" cy="110" r="70"/>
+        <path id="ringpath" d="M110,40 a70,70 0 1,1 -0.1,0" fill="none"/>
+        <text class="seal-ring-text"><textPath href="#ringpath" startOffset="4">✦ СЛАВА И УДАЧА ✦ РИСК И ВЫБОР ✦</textPath></text>
+        <g transform="translate(110,110)">
+          <path class="seal-star" d="M0,-52 L9.4,-9.4 L52,0 L9.4,9.4 L0,52 L-9.4,9.4 L-52,0 L-9.4,-9.4 Z"/>
+          <circle class="seal-dot" cx="0" cy="0" r="4"/>
+        </g>
+      </svg>
+    </div>
+    <div class="title-block">
+      <h1 class="game-title">Поиски славы и удачи</h1>
+      <p class="subtitle">Лист искателя приключений</p>
+      <div class="name-row">
+        <label class="field-label" for="charName">Имя</label>
+        <input class="name-input" id="charName" name="charName" type="text" placeholder="как назвать героя этой истории…">
+      </div>
+    </div>
+    <div class="quickref">
+      <b>Бросок 2к6:</b>
+      <span>2 — <em>катастрофа</em></span>
+      <span>3–4 — <em>провал без осложнений</em></span>
+      <span>5–6 — провал, но…</span>
+      <span>7–9 — успех, но…</span>
+      <span>10–11 — <em>успех</em></span>
+      <span>12 — <em>триумф</em></span>
+      <span class="quickref-note">Атака: 2к6 + владение оружием, успех на 7+. Защита от физического урона: 2к6 + доспех и/или щит, успех на 9+; при успехе урон принимает доспех или щит.</span>
+      <span class="quickref-note">Спасбросок — по этой же таблице. Яд и болезни: 10+ — избежал, 7–9 — частично, 6 и меньше — в полную силу. Мораль — по своей таблице.</span>
+    </div>
+  </header>
+
+  <!-- ОПИСАНИЕ ПЕРСОНАЖА -->
+  <div class="section">
+    <div class="section-title">Описание персонажа</div>
+    <div class="panel">
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">Особая способность / предмет / сила</label>
+          <textarea rows="2" name="specialAbility" placeholder="одно, что выделяет героя…"></textarea>
+        </div>
+        <div class="field">
+          <label class="field-label">Слабость — в чём откровенно плох</label>
+          <textarea rows="2" name="weakness" placeholder="страх, увечье, неумение…"></textarea>
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <textarea rows="3" name="description" placeholder="Опишите персонажа своими словами…"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЖИЗНЬ И КОШЕЛЁК -->
+  <div class="section grid-2">
+    <div>
+      <div class="section-title">Здоровье</div>
+      <div class="panel">
+        <div class="pip-config">
+          <label for="woundMax">Всего ран:</label>
+          <input type="number" id="woundMax" name="woundMax" min="1" max="4" value="3">
+        </div>
+        <div class="field" style="margin-top:6px;">
+          <label class="field-label" for="strengthTier">Категория силы (Слабый 2 · Средний 3 · Сильный 4)</label>
+          <select id="strengthTier" name="strengthTier">
+            <option value="weak">слабый — не выше лёгкого доспеха и оружия</option>
+            <option value="average" selected>средний — не выше среднего доспеха и оружия</option>
+            <option value="strong">сильный — вплоть до сверхтяжёлого доспеха и оружия</option>
+          </select>
+        </div>
+        <div class="pip-row" id="woundPips"></div>
+        <div class="status-line" id="woundStatus">Здоров</div>
+        <p class="hint" style="margin:2px 0 0;">Заклинатели всегда «слабые», Служители — «средние». Урон жизненной силе навсегда снижает максимум ран.</p>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Кошелёк</div>
+      <div class="panel">
+        <div class="inline-row">
+          <div class="field">
+            <label class="field-label">Стартовое серебро (2к6×10)</label>
+            <input type="text" name="startSilver" placeholder="напр. 70">
+          </div>
+        </div>
+        <p class="hint">1 золотая монета = 100 серебряных = 10 000 бронзовых.</p>
+        <div class="inline-row">
+          <div class="field">
+            <label class="field-label">Золотые монеты</label>
+            <input type="text" id="gold" readonly placeholder="авто">
+          </div>
+          <div class="field">
+            <label class="field-label">Серебряные монеты</label>
+            <input type="text" id="silver" name="silver" placeholder="0">
+          </div>
+          <div class="field">
+            <label class="field-label">Бронзовые монеты</label>
+            <input type="text" id="bronze" readonly placeholder="авто">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ОРУЖИЕ -->
+  <div class="section">
+    <div class="section-title">Оружие</div>
+    <div class="panel">
+      <table class="eq-table">
+        <tr><th>Название</th><th class="narrow">Класс</th><th>Свойство</th></tr>
+        <tr><td><input type="text" name="weapon1_name"></td><td class="narrow"><input type="text" name="weapon1_type"></td><td><textarea class="spec" rows="1" name="weapon1_spec"></textarea></td></tr>
+        <tr><td><input type="text" name="weapon2_name"></td><td class="narrow"><input type="text" name="weapon2_type"></td><td><textarea class="spec" rows="1" name="weapon2_spec"></textarea></td></tr>
+        <tr><td><input type="text" name="weapon3_name"></td><td class="narrow"><input type="text" name="weapon3_type"></td><td><textarea class="spec" rows="1" name="weapon3_spec"></textarea></td></tr>
+        <tr><td><input type="text" name="weapon4_name"></td><td class="narrow"><input type="text" name="weapon4_type"></td><td><textarea class="spec" rows="1" name="weapon4_spec"></textarea></td></tr>
+      </table>
+      <div class="grid-2" style="margin-top:8px;">
+        <div class="field">
+          <label class="field-label">Владение оружием: ближний бой</label>
+          <div class="inline-row">
+            <div class="field"><input type="text" name="specMelee" placeholder="клинки, дробящее, древковое"></div>
+            <div class="field mod-field">
+              <label class="field-label">+1</label>
+              <input type="text" name="specMeleeMod" placeholder="+1">
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="field-label">Владение оружием: дальний бой</label>
+          <div class="inline-row">
+            <div class="field"><input type="text" name="specRanged" placeholder="луки, арбалеты, метательное"></div>
+            <div class="field mod-field">
+              <label class="field-label">+1</label>
+              <input type="text" name="specRangedMod" placeholder="+1">
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="hint" style="margin:8px 0 0;">Всё оружие наносит 1 ранение; магическое даёт свой «плюс» к ранениям. Атака: 2к6 + владение оружием, успех на 7+; владение даёт +1, без владения — 0, −1 или −2. Тяжёлое — две руки и защита цели −1; бастард в двух руках считается тяжёлым. Две шестёрки — опциональный Кубик Крови.</p>
+    </div>
+  </div>
+
+  <!-- ДОСПЕХ И ЩИТ -->
+  <div class="section grid-2">
+    <div>
+      <div class="section-title">Доспех</div>
+      <div class="panel">
+        <div class="field"><label class="field-label">Название</label><input type="text" name="armorName" placeholder="кожаная, кольчуга, латы…"></div>
+        <div class="grid-2" style="margin-top:8px;">
+          <div class="field">
+            <label class="field-label">Физ. защита (+)</label>
+            <input type="text" name="armorPhys" placeholder="+1…+4">
+          </div>
+          <div class="field">
+            <label class="field-label">Маг. защита (+, только зачарованный)</label>
+            <input type="text" name="armorMagic" placeholder="если зачарован">
+          </div>
+        </div>
+        <p class="hint" style="margin:8px 0 0;">Защита: 2к6 + доспех/щит, успех на 9+ — урон принимает доспех или щит. Доспех защищает только от физического урона; магический, ментальный и урон жизненной силе игнорируют незачарованный доспех. Спасбросок от магии — только в зачарованном доспехе или со щитом. Лёгкий +1 · средний +2 · тяжёлый +3 · сверхтяжёлый +4. Без закрытого шлема тяжёлый и сверхтяжёлый доспех считаются на ступень ниже.</p>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Щит</div>
+      <div class="panel">
+        <div class="field"><label class="field-label">Название</label><input type="text" name="shieldName" placeholder="баклер, щит, тяжёлый щит…"></div>
+        <div class="grid-2" style="margin-top:8px;">
+          <div class="field">
+            <label class="field-label">Физ. защита (+)</label>
+            <input type="text" name="shieldPhys" placeholder="+1…+2">
+          </div>
+          <div class="field">
+            <label class="field-label">Маг. защита (+, только зачарованный)</label>
+            <input type="text" name="shieldMagic" placeholder="если зачарован">
+          </div>
+        </div>
+        <p class="hint" style="margin:8px 0 0;">Щит ситуативен: удар с фланга, цепом или со спины может его обойти. Баклер +1 только в ближнем бою, но не от стрелковых атак · щит +1 · тяжёлый щит +2.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- СНАРЯЖЕНИЕ -->
+  <div class="section">
+    <div class="section-title">Снаряжение</div>
+    <div class="panel">
+      <div class="equip-list" id="equipList"></div>
+      <p class="hint" style="margin:8px 0 0;">Нагрузка: 14 минус модификатор доспеха и щита предметов; 250 монет — один предмет. Больше — обременение, вдвое больше — перегрузка.</p>
+    </div>
+  </div>
+
+  <!-- ЧЕРТЫ -->
+  <div class="section">
+    <div class="section-title">Черты и развитие</div>
+    <p class="hint">Заполняется по ходу игры — за пережитые события и крупные победы.</p>
+    <div class="panel">
+      <div class="equip-list traits-list" id="traitsList"></div>
+    </div>
+  </div>
+
+  <!-- МАГИЯ / ЧУДЕСА -->
+  <div class="section">
+    <div class="section-title">Магия и Чудеса</div>
+    <p class="hint">Сталь и холодное железо гасят магию: в железном доспехе не колдуют и железных предметов в руках не держат; доспех из шкур помехой не будет. Раскалённое железо, наоборот, ведёт чары. Заклинатель всегда считается «слабым».</p>
+    <p class="hint">Сотворение — 2к6 с модификатором: 12 — все 4 опции в позитиве · 10–11 — 3 опции · 7–9 — 2 · 3–6 — 1 · 2 — катастрофа.</p>
+    <div class="panel">
+      <div class="grid-2">
+        <div class="field">
+          <label class="field-label">Школа магии (Заклинатель)</label>
+          <input type="text" name="magicSchool">
+        </div>
+        <div class="field">
+          <label class="field-label">Бог / культ (Служитель)</label>
+          <input type="text" name="deity">
+        </div>
+      </div>
+      <div class="field" style="margin-top:8px;">
+        <label class="field-label">Заклинания / Чудеса</label>
+        <textarea rows="3" name="spells"></textarea>
+      </div>
+
+      <div class="grid-2" style="margin-top:10px;">
+        <div>
+          <div class="pip-config">
+            <label for="exhMax">Истощение (предел до игры, обычно 4):</label>
+            <input type="number" id="exhMax" name="exhMax" min="1" max="4" value="4">
+          </div>
+          <div class="pip-row" id="exhPips"></div>
+          <div class="status-line" id="exhStatus">Без штрафа</div>
+          <p class="hint" style="margin:2px 0 0;">Штраф растёт линейно; на пределе колдовать нельзя, пока не отдохнёшь 8 часов в безопасности. Истощение компенсируется диетой с красным мясом и железом.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЗАМЕТКИ -->
+  <div class="section">
+    <div class="section-title">Заметки</div>
+    <div class="panel">
+      <textarea rows="4" name="notes" placeholder="союзники, долги, слухи, враги, обещания…"></textarea>
+    </div>
+  </div>
+
+  <div class="actions no-print">
+    <button id="printBtn">Печать / сохранить PDF</button>
+    <button id="resetBtn" class="secondary">Очистить лист</button>
+  </div>
+
+  <p class="colophon">«Поиски славы и удачи» (FKR) — https://t.me/pcspeoplestoo</p>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'fnf_character_sheet_v3';
+  const DEFAULTS = {
+    woundMax: 3, woundMin: 1, woundMaxLimit: 4,
+    exhMax: 4, supMin: 1, supMax: 4
+  };
+  const EQUIP_LINES = 8;
+  const TRAIT_LINES = 4;
+  const STRENGTH_WOUNDS = { weak: 2, average: 3, strong: 4 };
+
+  function clampRange(value, fallback, min, max){
+    const n = parseInt(value, 10);
+    if(!isFinite(n)) return fallback;
+    return Math.max(min, Math.min(max, n));
+  }
+
+  function buildPips(containerId, count, extraClass, statusFn){
+    const el = document.getElementById(containerId);
+    if(!el) return;
+    const filled = el.querySelectorAll('input:checked').length;
+    el.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const label = document.createElement('label');
+      label.className = 'pip ' + extraClass;
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = i < filled;
+      input.addEventListener('change', function(){
+        statusFn();
+        saveState();
+      });
+      label.appendChild(input);
+      el.appendChild(label);
+    }
+    statusFn();
+  }
+
+  function setPipFilled(containerId, n){
+    const inputs = document.querySelectorAll('#' + containerId + ' input');
+    inputs.forEach(function(input, i){ input.checked = i < n; });
+  }
+
+  function setWoundMax(raw){
+    const el = document.getElementById('woundMax');
+    el.value = clampRange(raw, DEFAULTS.woundMax, DEFAULTS.woundMin, DEFAULTS.woundMaxLimit);
+    buildPips('woundPips', parseInt(el.value, 10), 'wound', updateWoundStatus);
+  }
+
+  function setWoundFromStrength(){
+    const sel = document.getElementById('strengthTier');
+    const w = STRENGTH_WOUNDS[sel.value];
+    if(w === undefined) return;
+    setWoundMax(w);
+  }
+
+  function setExhMax(raw){
+    const el = document.getElementById('exhMax');
+    el.value = clampRange(raw, DEFAULTS.exhMax, DEFAULTS.supMin, DEFAULTS.supMax);
+    buildPips('exhPips', parseInt(el.value, 10), 'exh', updateExhStatus);
+  }
+
+  function updateWoundStatus(){
+    const pips = document.querySelectorAll('#woundPips input');
+    const total = pips.length;
+    const filled = Array.from(pips).filter(p=>p.checked).length;
+    const remaining = total - filled;
+    const statusEl = document.getElementById('woundStatus');
+    statusEl.classList.remove('warn');
+    if(total === 0){ statusEl.textContent=''; return; }
+    if(remaining <= 0){ statusEl.textContent = 'Смерть или без сознания (по договорённости)'; statusEl.classList.add('warn'); }
+    else if(remaining === 1){ statusEl.textContent = 'Ослаблен: −2 ко всем броскам, действует последним'; statusEl.classList.add('warn'); }
+    else if(remaining < total){ statusEl.textContent = 'Ранен'; }
+    else{ statusEl.textContent = 'Здоров'; }
+  }
+
+  function updateExhStatus(){
+    const pips = document.querySelectorAll('#exhPips input');
+    const total = pips.length;
+    const filled = Array.from(pips).filter(p=>p.checked).length;
+    const statusEl = document.getElementById('exhStatus');
+    statusEl.classList.remove('warn');
+    if(filled === 0){ statusEl.textContent = 'Без штрафа'; }
+    else if(filled >= total){ statusEl.textContent = 'Колдовать нельзя, пока не отдохнёшь 8 часов в безопасности'; statusEl.classList.add('warn'); }
+    else{ statusEl.textContent = 'Штраф ко всем последующим заклинаниям: −' + filled; }
+  }
+
+  function buildLines(containerId, count, placeholder, namePrefix){
+    const el = document.getElementById(containerId);
+    el.innerHTML = '';
+    for(let i=0;i<count;i++){
+      const row = document.createElement('div');
+      row.className = 'equip-line';
+      const span = document.createElement('span');
+      span.textContent = (i+1) + '.';
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = placeholder || '';
+      if(namePrefix){ input.name = namePrefix + (i+1); }
+      row.appendChild(span);
+      row.appendChild(input);
+      el.appendChild(row);
+    }
+  }
+
+  function formatGold(value){
+    return parseFloat(value.toFixed(2)).toString();
+  }
+
+  function updateCoinConversion(){
+    const silverEl = document.getElementById('silver');
+    const goldEl = document.getElementById('gold');
+    const bronzeEl = document.getElementById('bronze');
+    const raw = silverEl.value.trim().replace(',', '.');
+    const silver = parseFloat(raw);
+    if(raw === '' || !isFinite(silver) || silver < 0){
+      goldEl.value = '';
+      bronzeEl.value = '';
+      return;
+    }
+    goldEl.value = formatGold(silver / 100);
+    bronzeEl.value = Math.round(silver * 100).toString();
+  }
+
+  function collectState(){
+    const state = { fields: {}, wounds: 0, exhaustion: 0 };
+    document.querySelectorAll('.sheet [name]').forEach(function(el){
+      state.fields[el.name] = (el.type === 'checkbox') ? el.checked : el.value;
+    });
+    state.wounds = document.querySelectorAll('#woundPips input:checked').length;
+    state.exhaustion = document.querySelectorAll('#exhPips input:checked').length;
+    return state;
+  }
+
+  function applyState(state){
+    if(!state || !state.fields) return;
+    document.querySelectorAll('.sheet [name]').forEach(function(el){
+      const v = state.fields[el.name];
+      if(v === undefined) return;
+      if(el.type === 'checkbox') el.checked = v;
+      else el.value = v;
+    });
+    setWoundMax(document.getElementById('woundMax').value);
+    setExhMax(document.getElementById('exhMax').value);
+    setPipFilled('woundPips', state.wounds || 0);
+    setPipFilled('exhPips', state.exhaustion || 0);
+    updateWoundStatus();
+    updateExhStatus();
+  }
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(collectState()));
+    }catch(e){}
+  }
+
+  function loadState(){
+    try{
+      return JSON.parse(localStorage.getItem(STORAGE_KEY));
+    }catch(e){
+      return null;
+    }
+  }
+
+  function initSheet(){
+    const woundMax = document.getElementById('woundMax');
+    const exhMax = document.getElementById('exhMax');
+
+    buildLines('equipList', EQUIP_LINES, '', 'equip');
+    buildLines('traitsList', TRAIT_LINES, '', 'trait');
+    setWoundMax(woundMax.value);
+    setExhMax(exhMax.value);
+
+    applyState(loadState());
+
+    // «Свойство» в оружии: textarea сам подстраивает высоту под текст,
+    // чтобы длинная строка переносилась, а не уезжала влево.
+    function autosizeSpec(t){ t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
+    document.querySelectorAll('.sheet textarea.spec').forEach(function(t){
+      t.addEventListener('input', function(){ autosizeSpec(t); });
+      autosizeSpec(t);
+    });
+    window.addEventListener('beforeprint', function(){
+      document.querySelectorAll('.sheet textarea.spec').forEach(autosizeSpec);
+    });
+
+    document.getElementById('silver').addEventListener('input', updateCoinConversion);
+    updateCoinConversion();
+
+    document.querySelectorAll('.sheet [name]').forEach(function(el){
+      if(el.id === 'woundMax' || el.id === 'exhMax') return;
+      if(el.type === 'checkbox'){ el.addEventListener('change', saveState); }
+      else {
+        el.addEventListener('input', saveState);
+        if(el.tagName === 'SELECT'){ el.addEventListener('change', saveState); }
+      }
+    });
+
+    woundMax.addEventListener('change', function(){ setWoundMax(woundMax.value); saveState(); });
+    document.getElementById('strengthTier').addEventListener('change', function(){ setWoundFromStrength(); saveState(); });
+    exhMax.addEventListener('change', function(){ setExhMax(exhMax.value); saveState(); });
+
+    document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
+    document.getElementById('resetBtn').addEventListener('click', function(){
+      if(!confirm('Очистить весь лист? Это действие нельзя отменить.')) return;
+      document.querySelectorAll('.sheet input[type=text]').forEach(i=>i.value='');
+      document.querySelectorAll('.sheet textarea').forEach(t=>{
+        t.value='';
+      });
+      document.querySelectorAll('.sheet textarea.spec').forEach(autosizeSpec);
+      document.querySelectorAll('.sheet input[type=checkbox]').forEach(c=>c.checked=false);
+      document.querySelectorAll('.sheet input[type=number]').forEach(function(n){
+        if(n.id === 'woundMax' || n.id === 'exhMax') return;
+        n.value = n.defaultValue || '0';
+      });
+      document.querySelectorAll('.sheet select').forEach(function(s){
+        const def = s.querySelector('option[selected]');
+        s.value = def ? def.value : s.options[0].value;
+      });
+      setWoundMax(DEFAULTS.woundMax);
+      setExhMax(DEFAULTS.exhMax);
+      updateCoinConversion();
+      saveState();
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', initSheet);
+</script>
+</body>
+</html>
