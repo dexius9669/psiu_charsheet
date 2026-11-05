@@ -228,7 +228,10 @@
   .pip-config label{ font-family: var(--font-head); }
 
   /* ---------- tables ---------- */
-  table.eq-table{ width:100%; border-collapse: collapse; font-size:1rem; }
+  table.eq-table{ width:100%; border-collapse: collapse; font-size:1rem; table-layout: fixed; }
+  table.eq-table th:nth-child(1), table.eq-table td:nth-child(1){ width: 32%; }
+  table.eq-table th:nth-child(2), table.eq-table td:nth-child(2){ width: 12%; }
+  table.eq-table th:nth-child(3), table.eq-table td:nth-child(3){ width: 56%; }
   table.eq-table th{
     font-family: var(--font-head); font-weight:700; letter-spacing:.02em;
     text-align:left; color: var(--wutc-green); font-size:.95rem;
@@ -237,7 +240,6 @@
   table.eq-table td{ padding: .35rem .4rem; border-bottom: 1px solid var(--line); }
   table.eq-table tr:nth-child(even){ background: rgba(255,255,255,.06); }
   table.eq-table input[type=text]{ border-bottom:none; padding:.1rem; }
-  table.eq-table td.narrow{ width: 6rem; }
   table.eq-table textarea.spec{
     display:block;
     width:100%;
