@@ -226,6 +226,7 @@
 
   .pip-config{ display:flex; align-items:center; gap:.5rem; font-size:.95rem; color:var(--muted); margin-bottom:.15rem;}
   .pip-config label{ font-family: var(--font-head); }
+  .pip-config .pip-row{ margin:0; }
 
   /* ---------- tables ---------- */
   table.eq-table{ width:100%; border-collapse: collapse; font-size:1rem; table-layout: fixed; }
@@ -379,18 +380,9 @@
       <div class="section-title">Здоровье</div>
       <div class="panel">
         <div class="pip-config">
-          <label for="woundMax">Всего ран:</label>
-          <input type="number" id="woundMax" name="woundMax" min="1" max="3" value="3">
+          <label>Всего ран:</label>
+          <div class="pip-row" id="woundPips"></div>
         </div>
-        <div class="field" style="margin-top:6px;">
-          <label class="field-label" for="strengthTier">Категория силы</label>
-          <select id="strengthTier" name="strengthTier">
-            <option value="weak">слабый — не выше лёгкого доспеха и оружия</option>
-            <option value="average" selected>средний — не выше среднего доспеха и оружия</option>
-            <option value="strong">сильный — вплоть до сверхтяжёлого доспеха и оружия</option>
-          </select>
-        </div>
-        <div class="pip-row" id="woundPips"></div>
         <div class="status-line" id="woundStatus">Здоров</div>
         <p class="hint" style="margin:2px 0 0;">Заклинатели всегда «слабые», Служители — «средние». Урон жизненной силе навсегда снижает максимум ран.</p>
       </div>
@@ -571,12 +563,11 @@
 <script>
   const STORAGE_KEY = 'fnf_character_sheet_v3';
   const DEFAULTS = {
-    woundMax: 3, woundMin: 1, woundMaxLimit: 3,
+    woundMax: 3,
     exhMax: 4, supMin: 1, supMax: 4
   };
   const EQUIP_LINES = 14;
   const TRAIT_LINES = 4;
-  const STRENGTH_WOUNDS = { weak: 2, average: 3, strong: 4 };
 
   function clampRange(value, fallback, min, max){
     const n = parseInt(value, 10);
@@ -610,17 +601,8 @@
     inputs.forEach(function(input, i){ input.checked = i < n; });
   }
 
-  function setWoundMax(raw){
-    const el = document.getElementById('woundMax');
-    el.value = clampRange(raw, DEFAULTS.woundMax, DEFAULTS.woundMin, DEFAULTS.woundMaxLimit);
-    buildPips('woundPips', parseInt(el.value, 10), 'wound', updateWoundStatus);
-  }
-
-  function setWoundFromStrength(){
-    const sel = document.getElementById('strengthTier');
-    const w = STRENGTH_WOUNDS[sel.value];
-    if(w === undefined) return;
-    setWoundMax(w);
+  function buildWoundPips(){
+    buildPips('woundPips', DEFAULTS.woundMax, 'wound', updateWoundStatus);
   }
 
   function setExhMax(raw){
@@ -709,7 +691,7 @@
       if(el.type === 'checkbox') el.checked = v;
       else el.value = v;
     });
-    setWoundMax(document.getElementById('woundMax').value);
+    buildWoundPips();
     setExhMax(document.getElementById('exhMax').value);
     setPipFilled('woundPips', state.wounds || 0);
     setPipFilled('exhPips', state.exhaustion || 0);
@@ -732,12 +714,11 @@
   }
 
   function initSheet(){
-    const woundMax = document.getElementById('woundMax');
     const exhMax = document.getElementById('exhMax');
 
     buildLines('equipList', EQUIP_LINES, '', 'equip');
     buildLines('traitsList', TRAIT_LINES, '', 'trait');
-    setWoundMax(woundMax.value);
+    buildWoundPips();
     setExhMax(exhMax.value);
 
     applyState(loadState());
@@ -757,7 +738,7 @@
     updateCoinConversion();
 
     document.querySelectorAll('.sheet [name]').forEach(function(el){
-      if(el.id === 'woundMax' || el.id === 'exhMax') return;
+      if(el.id === 'exhMax') return;
       if(el.type === 'checkbox'){ el.addEventListener('change', saveState); }
       else {
         el.addEventListener('input', saveState);
@@ -765,8 +746,6 @@
       }
     });
 
-    woundMax.addEventListener('change', function(){ setWoundMax(woundMax.value); saveState(); });
-    document.getElementById('strengthTier').addEventListener('change', function(){ setWoundFromStrength(); saveState(); });
     exhMax.addEventListener('change', function(){ setExhMax(exhMax.value); saveState(); });
 
     document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
@@ -779,14 +758,13 @@
       document.querySelectorAll('.sheet textarea.spec').forEach(autosizeSpec);
       document.querySelectorAll('.sheet input[type=checkbox]').forEach(c=>c.checked=false);
       document.querySelectorAll('.sheet input[type=number]').forEach(function(n){
-        if(n.id === 'woundMax' || n.id === 'exhMax') return;
+        if(n.id === 'exhMax') return;
         n.value = n.defaultValue || '0';
       });
       document.querySelectorAll('.sheet select').forEach(function(s){
         const def = s.querySelector('option[selected]');
         s.value = def ? def.value : s.options[0].value;
       });
-      setWoundMax(DEFAULTS.woundMax);
       setExhMax(DEFAULTS.exhMax);
       updateCoinConversion();
       saveState();
