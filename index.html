@@ -264,6 +264,11 @@
   .equip-line{ display:flex; align-items:baseline; gap:.4rem; min-width:0; }
   .equip-line span{ color: var(--muted); font-size:.85rem; flex-shrink:0; }
   .equip-line input{ flex:1; min-width:0; }
+  .equip-subhead{
+    margin: .75rem 0 .15rem; font-family: var(--font-head); font-size:.85rem;
+    letter-spacing:.06em; text-transform:uppercase; color: var(--muted);
+    break-after: avoid;
+  }
 
   .traits-list .equip-line span{ font-family: var(--font-head); font-size:.85rem; }
 
@@ -315,6 +320,7 @@
     .status-line{ color:#444; }
     .status-line.warn{ color:#8a3b00; }
     .equip-line span{ color:#555; }
+    .equip-subhead{ color:#555; }
     .panel{ background: transparent; }
     .grid-2{ grid-template-columns:1fr 1fr; }
     .quickref{ gap:.4rem; font-size:11px; padding:.35rem .5rem; margin-top:.5rem; }
@@ -463,7 +469,13 @@
         <div class="grid-2" style="margin-top:8px;">
           <div class="field">
             <label class="field-label">Физ. защита (+)</label>
-            <input type="text" name="armorPhys" placeholder="+1…+4">
+            <select name="armorPhys">
+              <option value="0" selected>Без доспеха</option>
+              <option value="1">Лёгкий (+1)</option>
+              <option value="2">Средний (+2)</option>
+              <option value="3">Тяжёлый (+3)</option>
+              <option value="4">Сверхтяжёлый (+4)</option>
+            </select>
           </div>
           <div class="field">
             <label class="field-label">Маг. защита (+, только зачарованный)</label>
@@ -480,7 +492,11 @@
         <div class="grid-2" style="margin-top:8px;">
           <div class="field">
             <label class="field-label">Физ. защита (+)</label>
-            <input type="text" name="shieldPhys" placeholder="+1…+2">
+            <select name="shieldPhys">
+              <option value="0" selected>Без щита</option>
+              <option value="1">Баклер или щит (+1)</option>
+              <option value="2">Тяжёлый щит (+2)</option>
+            </select>
           </div>
           <div class="field">
             <label class="field-label">Маг. защита (+, только зачарованный)</label>
@@ -497,7 +513,11 @@
     <div class="section-title">Снаряжение</div>
     <div class="panel">
       <div class="equip-list" id="equipList"></div>
-      <p class="hint" style="margin:8px 0 0;">Нагрузка: 14 минус модификатор доспеха и щита; надетое и удерживаемое не считается; 250 монет — один предмет. Больше — обременение, вдвое больше — перегрузка.</p>
+      <div class="equip-subhead">Дополнительно</div>
+      <div class="equip-list" id="equipExtraList"></div>
+      <div class="status-line" id="loadCapacity"></div>
+      <div class="status-line" id="loadStatus"></div>
+      <p class="hint" style="margin:8px 0 0;">Нагрузка: 14 минус модификатор доспеха и щита; надетое и удерживаемое не считается; 250 монет — один предмет (считаются автоматически). Больше — обременение, вдвое больше — перегрузка.</p>
     </div>
   </div>
 
@@ -555,6 +575,7 @@
     exhMax: 4, supMin: 1, supMax: 4
   };
   const EQUIP_LINES = 14;
+  const EXTRA_EQUIP_LINES = 14;
   const TRAIT_LINES = 4;
 
   function clampRange(value, fallback, min, max){
@@ -624,18 +645,19 @@
     else{ statusEl.textContent = 'Штраф ко всем последующим заклинаниям: −' + filled; }
   }
 
-  function buildLines(containerId, count, placeholder, namePrefix){
+  function buildLines(containerId, count, placeholder, namePrefix, startAt){
     const el = document.getElementById(containerId);
+    const first = startAt || 1;
     el.innerHTML = '';
     for(let i=0;i<count;i++){
       const row = document.createElement('div');
       row.className = 'equip-line';
       const span = document.createElement('span');
-      span.textContent = (i+1) + '.';
+      span.textContent = (first + i) + '.';
       const input = document.createElement('input');
       input.type = 'text';
       input.placeholder = placeholder || '';
-      if(namePrefix){ input.name = namePrefix + (i+1); }
+      if(namePrefix){ input.name = namePrefix + (first + i); }
       row.appendChild(span);
       row.appendChild(input);
       el.appendChild(row);
@@ -661,6 +683,47 @@
     bronzeEl.value = Math.round(silver * 100).toString();
   }
 
+  function modifierValue(name){
+    const el = document.querySelector('[name="' + name + '"]');
+    if(!el) return 0;
+    const n = parseInt(el.value, 10);
+    return isFinite(n) ? Math.max(0, n) : 0;
+  }
+
+  function updateLoad(){
+    const armor = modifierValue('armorPhys');
+    const shield = modifierValue('shieldPhys');
+    const capacity = Math.max(0, 14 - armor - shield);
+
+    const cells = Array.from(document.querySelectorAll('#equipList input, #equipExtraList input'))
+      .filter(function(input){ return input.value.trim().length > 0; }).length;
+
+    const rawSilver = document.getElementById('silver').value.trim().replace(',', '.');
+    const silver = parseFloat(rawSilver);
+    const coinItems = (isFinite(silver) && silver > 0) ? Math.floor(silver / 250) : 0;
+
+    const total = cells + coinItems;
+
+    const capEl = document.getElementById('loadCapacity');
+    capEl.textContent = (armor || shield)
+      ? 'Доступно: ' + capacity + ' предметов (14 − доспех ' + armor + ' − щит ' + shield + ')'
+      : 'Доступно: ' + capacity + ' предметов';
+
+    const statusEl = document.getElementById('loadStatus');
+    statusEl.classList.remove('warn');
+    const coinsNote = coinItems ? ' (монеты: ' + coinItems + ')' : '';
+
+    if(capacity > 0 && total >= capacity * 2){
+      statusEl.textContent = 'Перегрузка: занято ' + total + ' из ' + capacity + coinsNote + ' — изнурён при любом длительном движении';
+      statusEl.classList.add('warn');
+    } else if(total > capacity){
+      statusEl.textContent = 'Обременение: занято ' + total + ' из ' + capacity + coinsNote + ' — медлителен, рискует упасть';
+      statusEl.classList.add('warn');
+    } else {
+      statusEl.textContent = 'Занято ' + total + ' из ' + capacity + coinsNote + ' · свободно ' + (capacity - total);
+    }
+  }
+
   function collectState(){
     const state = { fields: {}, wounds: 0, exhaustion: 0 };
     document.querySelectorAll('.sheet [name]').forEach(function(el){
@@ -677,6 +740,10 @@
       const v = state.fields[el.name];
       if(v === undefined) return;
       if(el.type === 'checkbox') el.checked = v;
+      else if(el.tagName === 'SELECT'){
+        const match = Array.from(el.options).some(function(o){ return o.value === String(v); });
+        el.value = match ? String(v) : String(parseInt(v, 10) || 0);
+      }
       else el.value = v;
     });
     buildWoundPips();
@@ -705,11 +772,13 @@
     const exhMax = document.getElementById('exhMax');
 
     buildLines('equipList', EQUIP_LINES, '', 'equip');
+    buildLines('equipExtraList', EXTRA_EQUIP_LINES, '', 'equip', EQUIP_LINES + 1);
     buildLines('traitsList', TRAIT_LINES, '', 'trait');
     buildWoundPips();
     setExhMax(exhMax.value);
 
     applyState(loadState());
+    updateLoad();
 
     // «Свойство» в оружии: textarea сам подстраивает высоту под текст,
     // чтобы длинная строка переносилась, а не уезжала влево.
@@ -734,6 +803,9 @@
       }
     });
 
+    document.querySelector('.sheet').addEventListener('input', updateLoad);
+    document.querySelector('.sheet').addEventListener('change', updateLoad);
+
     exhMax.addEventListener('change', function(){ setExhMax(exhMax.value); saveState(); });
 
     document.getElementById('printBtn').addEventListener('click', function(){ window.print(); });
@@ -755,6 +827,7 @@
       });
       setExhMax(DEFAULTS.exhMax);
       updateCoinConversion();
+      updateLoad();
       saveState();
     });
   }
