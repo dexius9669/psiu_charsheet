@@ -258,7 +258,7 @@
   }
 
   .equip-list{ display:grid; grid-template-columns: 1fr 1fr; column-gap: 1.25rem; row-gap:.35rem;
-    grid-auto-flow: column; grid-template-rows: repeat(7, auto); }
+    grid-auto-flow: column; grid-template-rows: repeat(var(--equip-rows, 7), auto); }
   .traits-list{ grid-template-rows: repeat(2, auto); }
   @media (max-width:680px){ .equip-list{ grid-template-columns: 1fr; grid-auto-flow: row; grid-template-rows: none; } }
   .equip-line{ display:flex; align-items:baseline; gap:.4rem; min-width:0; }
@@ -574,9 +574,10 @@
     woundMax: 3,
     exhMax: 4, supMin: 1, supMax: 4
   };
-  const EQUIP_LINES = 14;
-  const EXTRA_EQUIP_LINES = 14;
+  const BASE_CAPACITY = 14;
   const TRAIT_LINES = 4;
+  let renderedCapacity = null;
+  let equipOverflow = {};
 
   function clampRange(value, fallback, min, max){
     const n = parseInt(value, 10);
@@ -690,20 +691,64 @@
     return isFinite(n) ? Math.max(0, n) : 0;
   }
 
+  function currentCapacity(){
+    return Math.max(0, BASE_CAPACITY - modifierValue('armorPhys') - modifierValue('shieldPhys'));
+  }
+
+  function renderEquip(capacity, values){
+    const total = capacity * 2;
+    if(!values){
+      values = [];
+      document.querySelectorAll('#equipList input, #equipExtraList input').forEach(function(input, i){
+        values[i] = input.value;
+      });
+      Object.keys(equipOverflow).forEach(function(key){
+        const i = parseInt(key, 10);
+        if(values[i] === undefined) values[i] = equipOverflow[key];
+      });
+    }
+
+    const rows = Math.max(1, Math.ceil(capacity / 2));
+    buildLines('equipList', capacity, '', 'equip', 1);
+    buildLines('equipExtraList', capacity, '', 'equip', capacity + 1);
+    ['equipList', 'equipExtraList'].forEach(function(id){
+      document.getElementById(id).style.setProperty('--equip-rows', rows);
+    });
+
+    for(let i=0;i<total;i++){
+      if(values[i] === undefined) continue;
+      const input = document.querySelector('[name="equip' + (i + 1) + '"]');
+      if(input) input.value = values[i];
+    }
+
+    equipOverflow = {};
+    Object.keys(values).forEach(function(key){
+      const i = parseInt(key, 10);
+      if(i >= total && values[i] !== undefined) equipOverflow[i] = values[i];
+    });
+    renderedCapacity = capacity;
+  }
+
   function updateLoad(){
-    const armor = modifierValue('armorPhys');
-    const shield = modifierValue('shieldPhys');
-    const capacity = Math.max(0, 14 - armor - shield);
+    const capacity = currentCapacity();
+    if(capacity !== renderedCapacity) renderEquip(capacity);
 
     const cells = Array.from(document.querySelectorAll('#equipList input, #equipExtraList input'))
       .filter(function(input){ return input.value.trim().length > 0; }).length;
+
+    const overflowCount = Object.keys(equipOverflow).filter(function(key){
+      const v = equipOverflow[key];
+      return v && v.trim().length > 0;
+    }).length;
 
     const rawSilver = document.getElementById('silver').value.trim().replace(',', '.');
     const silver = parseFloat(rawSilver);
     const coinItems = (isFinite(silver) && silver > 0) ? Math.floor(silver / 250) : 0;
 
-    const total = cells + coinItems;
+    const total = cells + overflowCount + coinItems;
 
+    const armor = modifierValue('armorPhys');
+    const shield = modifierValue('shieldPhys');
     const capEl = document.getElementById('loadCapacity');
     capEl.textContent = (armor || shield)
       ? 'Доступно: ' + capacity + ' предметов (14 − доспех ' + armor + ' − щит ' + shield + ')'
@@ -711,21 +756,22 @@
 
     const statusEl = document.getElementById('loadStatus');
     statusEl.classList.remove('warn');
-    const coinsNote = coinItems ? ' (монеты: ' + coinItems + ')' : '';
+    const notes = (coinItems ? ' (монеты: ' + coinItems + ')' : '') +
+      (overflowCount ? ' · вне листа: ' + overflowCount : '');
 
     if(capacity > 0 && total >= capacity * 2){
-      statusEl.textContent = 'Перегрузка: занято ' + total + ' из ' + capacity + coinsNote + ' — изнурён при любом длительном движении';
+      statusEl.textContent = 'Перегрузка: занято ' + total + ' из ' + capacity + notes + ' — изнурён при любом длительном движении';
       statusEl.classList.add('warn');
     } else if(total > capacity){
-      statusEl.textContent = 'Обременение: занято ' + total + ' из ' + capacity + coinsNote + ' — медлителен, рискует упасть';
+      statusEl.textContent = 'Обременение: занято ' + total + ' из ' + capacity + notes + ' — медлителен, рискует упасть';
       statusEl.classList.add('warn');
     } else {
-      statusEl.textContent = 'Занято ' + total + ' из ' + capacity + coinsNote + ' · свободно ' + (capacity - total);
+      statusEl.textContent = 'Занято ' + total + ' из ' + capacity + notes + ' · свободно ' + (capacity - total);
     }
   }
 
   function collectState(){
-    const state = { fields: {}, wounds: 0, exhaustion: 0 };
+    const state = { fields: {}, wounds: 0, exhaustion: 0, equipOverflow: equipOverflow };
     document.querySelectorAll('.sheet [name]').forEach(function(el){
       state.fields[el.name] = (el.type === 'checkbox') ? el.checked : el.value;
     });
@@ -736,16 +782,32 @@
 
   function applyState(state){
     if(!state || !state.fields) return;
+    const equipValues = [];
     document.querySelectorAll('.sheet [name]').forEach(function(el){
       const v = state.fields[el.name];
       if(v === undefined) return;
+      const match = /^equip(\d+)$/.exec(el.name);
+      if(match){ equipValues[parseInt(match[1], 10) - 1] = v; return; }
       if(el.type === 'checkbox') el.checked = v;
       else if(el.tagName === 'SELECT'){
-        const match = Array.from(el.options).some(function(o){ return o.value === String(v); });
-        el.value = match ? String(v) : String(parseInt(v, 10) || 0);
+        const ok = Array.from(el.options).some(function(o){ return o.value === String(v); });
+        el.value = ok ? String(v) : String(parseInt(v, 10) || 0);
       }
       else el.value = v;
     });
+    Object.keys(state.fields).forEach(function(name){
+      const match = /^equip(\d+)$/.exec(name);
+      if(!match) return;
+      const i = parseInt(match[1], 10) - 1;
+      if(equipValues[i] === undefined) equipValues[i] = state.fields[name];
+    });
+    if(state.equipOverflow && typeof state.equipOverflow === 'object'){
+      Object.keys(state.equipOverflow).forEach(function(key){
+        const i = parseInt(key, 10);
+        if(equipValues[i] === undefined) equipValues[i] = state.equipOverflow[key];
+      });
+    }
+    renderEquip(currentCapacity(), equipValues);
     buildWoundPips();
     setExhMax(document.getElementById('exhMax').value);
     setPipFilled('woundPips', state.wounds || 0);
@@ -771,13 +833,13 @@
   function initSheet(){
     const exhMax = document.getElementById('exhMax');
 
-    buildLines('equipList', EQUIP_LINES, '', 'equip');
-    buildLines('equipExtraList', EXTRA_EQUIP_LINES, '', 'equip', EQUIP_LINES + 1);
     buildLines('traitsList', TRAIT_LINES, '', 'trait');
     buildWoundPips();
     setExhMax(exhMax.value);
 
-    applyState(loadState());
+    const saved = loadState();
+    if(saved) applyState(saved);
+    else renderEquip(currentCapacity());
     updateLoad();
 
     // «Свойство» в оружии: textarea сам подстраивает высоту под текст,
@@ -803,7 +865,10 @@
       }
     });
 
-    document.querySelector('.sheet').addEventListener('input', updateLoad);
+    document.querySelector('.sheet').addEventListener('input', function(e){
+      if(e.target.matches('#equipList input, #equipExtraList input')) saveState();
+      updateLoad();
+    });
     document.querySelector('.sheet').addEventListener('change', updateLoad);
 
     exhMax.addEventListener('change', function(){ setExhMax(exhMax.value); saveState(); });
@@ -826,6 +891,7 @@
         s.value = def ? def.value : s.options[0].value;
       });
       setExhMax(DEFAULTS.exhMax);
+      equipOverflow = {};
       updateCoinConversion();
       updateLoad();
       saveState();
