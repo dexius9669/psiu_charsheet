@@ -279,7 +279,7 @@
   .magic-table th:nth-child(2){ width:13%; }
   .magic-table td, .magic-table th{ padding:.2rem; vertical-align:top; }
   .magic-table input{ min-width:0; }
-  .add-magic-row{ margin:.4rem 0 .8rem; }
+  .add-magic-row, .add-weapon-row{ margin:.4rem 0 .8rem; }
 
   /* ---------- footer ---------- */
   .actions{ margin-top: 1.5rem; display:flex; gap:.75rem; flex-wrap:wrap; }
@@ -303,7 +303,25 @@
 
   .colophon{ margin-top: 1.75rem; text-align:center; font-size:.9rem; color: var(--muted); font-style:italic; }
 
+  button.role-toggle{
+    display:block; width:100%; text-align:left; cursor:pointer;
+    color:var(--wutc-green); background:transparent;
+    border:0; border-bottom:.25rem solid var(--wutc-rule); padding:0 0 .35rem;
+    letter-spacing:normal;
+  }
+  .role-toggle::before{
+    content:""; display:inline-block; width:.4em; height:.4em; margin:0 .65em .12em .1em;
+    border:solid currentColor; border-width:0 .12em .12em 0; transform:rotate(-45deg);
+  }
+  .role-toggle[aria-expanded="true"]::before{ transform:rotate(45deg); }
+  @media screen{
+    .role-toggle[aria-expanded="false"]{ margin-bottom:0; }
+    .role-toggle[aria-expanded="false"] + div{ display:none; }
+  }
+
   @media print{
+    button.role-toggle{ color:#164; }
+    .role-toggle::before{ display:none; }
     body{ background: #fff; color:#111; padding:0; }
     .sheet{ max-width:100%; background:#fff; box-shadow:none; padding:0; }
     .no-print{ display:none !important; }
@@ -366,7 +384,7 @@
       <span>9–11 — <em>успех</em></span>
       <span>12 — <em>триумф</em></span>
       <span class="quickref-note">Атака: 2к6 + владение оружием, успех на 8+. Защита от физического урона: 2к6 + доспех и/или щит, успех на 9+; при успехе урон принимает доспех или щит.</span>
-      <span class="quickref-note">Спасбросок — по этой же таблице. Яд и болезни: 9+ — избежал, 6–8 — частично, 5 и меньше — в полную силу. Мораль — по своей таблице.</span>
+      <span class="quickref-note">Спасбросок — по этой же таблице. Яд и болезни: 9+ — избежал, 6–8 — частично, 5 и меньше — в полную силу.</span>
     </div>
   </header>
 
@@ -450,13 +468,16 @@
   <div class="section">
     <div class="section-title">Оружие</div>
     <div class="panel">
-      <table class="eq-table">
-        <tr><th>Название</th><th class="narrow">Класс</th><th>Свойство</th></tr>
+      <table class="eq-table" id="weaponTable">
+        <thead><tr><th>Название</th><th class="narrow">Класс</th><th>Свойство</th></tr></thead>
+        <tbody>
         <tr><td><input type="text" name="weapon1_name"></td><td class="narrow"><input type="text" name="weapon1_type"></td><td><textarea class="spec" rows="1" name="weapon1_spec"></textarea></td></tr>
         <tr><td><input type="text" name="weapon2_name"></td><td class="narrow"><input type="text" name="weapon2_type"></td><td><textarea class="spec" rows="1" name="weapon2_spec"></textarea></td></tr>
         <tr><td><input type="text" name="weapon3_name"></td><td class="narrow"><input type="text" name="weapon3_type"></td><td><textarea class="spec" rows="1" name="weapon3_spec"></textarea></td></tr>
         <tr><td><input type="text" name="weapon4_name"></td><td class="narrow"><input type="text" name="weapon4_type"></td><td><textarea class="spec" rows="1" name="weapon4_spec"></textarea></td></tr>
+        </tbody>
       </table>
+      <button type="button" id="addWeaponRow" class="add-weapon-row secondary no-print">Добавить строку</button>
       <div class="grid-2" style="margin-top:8px;">
         <div class="field">
           <label class="field-label">Владение оружием: ближний бой</label>
@@ -556,39 +577,43 @@
 
   <!-- МАГИЯ / ЧУДЕСА -->
   <div class="section">
-    <div class="section-title">Заклинатель</div>
-    <p class="hint">Сталь и холодное железо гасят магию: в железном доспехе не колдуют и железных предметов в руках не держат; доспех из шкур помехой не будет. Раскалённое железо, наоборот, ведёт чары. Обычно Заклинатель считается «слабым».</p>
-    <p class="hint">Сотворение — 2к6 с модификатором: 12 — все четыре условия · 9–11 — три · 6–8 — два · 3–5 — одно · 2 — катастрофа.</p>
-    <p class="hint">Условия: желаемый эффект · без истощения · ничего странного вокруг · без значительных побочных эффектов.</p>
-    <div class="panel">
-      <table class="magic-table" aria-label="Заклинание — записи" data-rows="8">
-        <thead><tr><th scope="col" data-field="spells">Заклинание</th><th scope="col" data-field="circle">Круг</th><th scope="col" data-field="range">Дальность</th><th scope="col" data-field="duration">Длительность</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
+    <button type="button" class="section-title role-toggle" aria-expanded="false" aria-controls="caster">Заклинатель</button>
+    <div id="caster">
+      <p class="hint">Сталь и холодное железо гасят магию: в железном доспехе не колдуют и железных предметов в руках не держат; доспех из шкур помехой не будет. Раскалённое железо, наоборот, ведёт чары. Обычно Заклинатель считается «слабым».</p>
+      <p class="hint">Сотворение — 2к6 с модификатором: 12 — все четыре условия · 9–11 — три · 6–8 — два · 3–5 — одно · 2 — катастрофа.</p>
+      <p class="hint">Условия: желаемый эффект · без истощения · ничего странного вокруг · без значительных побочных эффектов.</p>
+      <div class="panel">
+        <table class="magic-table" aria-label="Заклинание — записи" data-rows="8">
+          <thead><tr><th scope="col" data-field="spells">Заклинание</th><th scope="col" data-field="circle">Круг</th><th scope="col" data-field="range">Дальность</th><th scope="col" data-field="duration">Длительность</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
 
-      <div class="pip-config">
-        <label for="exhMax">Истощение (предел до игры, обычно 4):</label>
-        <input type="number" id="exhMax" name="exhMax" min="1" step="1" value="4">
+        <div class="pip-config">
+          <label for="exhMax">Истощение (предел до игры, обычно 4):</label>
+          <input type="number" id="exhMax" name="exhMax" min="1" step="1" value="4">
+        </div>
+        <div class="field"><label class="field-label" for="exhCount">Текущее истощение</label><input id="exhCount" name="exhCount" type="number" min="0" step="1" value="0"></div>
+        <div class="pip-row" id="exhPips"></div>
+        <div class="status-line" id="exhStatus">Без штрафа</div>
+        <p class="hint" style="margin:2px 0 0;">Штраф растёт линейно; на пределе колдовать нельзя, пока не отдохнёшь 8 часов в безопасности. Истощение компенсируется диетой с красным мясом и железом.</p>
       </div>
-      <div class="field"><label class="field-label" for="exhCount">Текущее истощение</label><input id="exhCount" name="exhCount" type="number" min="0" step="1" value="0"></div>
-      <div class="pip-row" id="exhPips"></div>
-      <div class="status-line" id="exhStatus">Без штрафа</div>
-      <p class="hint" style="margin:2px 0 0;">Штраф растёт линейно; на пределе колдовать нельзя, пока не отдохнёшь 8 часов в безопасности. Истощение компенсируется диетой с красным мясом и железом.</p>
     </div>
   </div>
 
   <div class="section">
-    <div class="section-title">Служитель</div>
-    <div class="panel">
-      <div class="grid-2"><div class="field"><label class="field-label" for="rank">Ранг</label><input id="rank" name="rank" type="text"></div><div class="field"><label class="field-label" for="vow">Обет / поручение</label><input id="vow" name="vow" type="text"></div></div>
-      <table class="magic-table" aria-label="Чудо — записи" data-rows="7">
-        <thead><tr><th scope="col" data-field="miracles">Чудо</th><th scope="col" data-field="miracleRank">Ранг</th><th scope="col" data-field="miracleRange">Дальность</th><th scope="col" data-field="miracleDuration">Длительность</th></tr></thead>
-        <tbody></tbody>
-      </table>
-      <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
-      <label><input type="checkbox" name="omen"> Знамение сегодня уже истолковано</label>
-      <p class="hint">Послушнику доступны вдохновение, Знамения и изгнание Нечисти. Одно толкование Знамения в день.</p>
+    <button type="button" class="section-title role-toggle" aria-expanded="false" aria-controls="cleric">Служитель</button>
+    <div id="cleric">
+      <div class="panel">
+        <div class="grid-2"><div class="field"><label class="field-label" for="rank">Ранг</label><input id="rank" name="rank" type="text"></div><div class="field"><label class="field-label" for="vow">Обет / поручение</label><input id="vow" name="vow" type="text"></div></div>
+        <table class="magic-table" aria-label="Чудо — записи" data-rows="7">
+          <thead><tr><th scope="col" data-field="miracles">Чудо</th><th scope="col" data-field="miracleRank">Ранг</th><th scope="col" data-field="miracleRange">Дальность</th><th scope="col" data-field="miracleDuration">Длительность</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
+        <label><input type="checkbox" name="omen"> Знамение сегодня уже истолковано</label>
+        <p class="hint">Послушнику доступны вдохновение, Знамения и изгнание Нечисти. Одно толкование Знамения в день.</p>
+      </div>
     </div>
   </div>
 
@@ -868,6 +893,8 @@
         state.fields[key] = values.join('\n').replace(/\n+$/, '');
       }
     }
+    state.openRoles = Array.from(document.querySelectorAll('.role-toggle[aria-expanded="true"]'),
+      button => button.getAttribute('aria-controls'));
     state.wounds = document.querySelectorAll('#woundPips input:checked').length;
     state.exhaustion = Number(document.getElementById('exhCount').value);
     return state;
@@ -934,13 +961,24 @@
 
   function initSheet(){
     const exhMax = document.getElementById('exhMax');
+    const weaponBody = document.querySelector('#weaponTable tbody');
 
     buildLines('traitsList', TRAIT_LINES, '', 'trait');
     buildWoundPips();
     setExhMax(exhMax.value);
 
     const saved = loadState();
+    for(const button of document.querySelectorAll('.role-toggle')){
+      const id = button.getAttribute('aria-controls');
+      const open = Array.isArray(saved?.openRoles) && saved.openRoles.includes(id);
+      button.setAttribute('aria-expanded', String(open));
+      button.addEventListener('click', function(){
+        button.setAttribute('aria-expanded', String(button.getAttribute('aria-expanded') === 'false'));
+        saveState();
+      });
+    }
     buildMagicTables(saved && saved.fields || {});
+    ensureWeaponRows(saved && saved.fields || {});
     if(saved) applyState(saved);
     else renderEquip(currentCapacity());
     updateLoad();
@@ -954,6 +992,32 @@
     });
     window.addEventListener('beforeprint', function(){
       document.querySelectorAll('.sheet textarea.spec').forEach(autosizeSpec);
+    });
+
+    function addWeaponRow(){
+      const n = weaponBody.children.length + 1;
+      const row = document.createElement('tr');
+      row.innerHTML = '<td><input type="text" name="weapon' + n + '_name"></td>' +
+        '<td class="narrow"><input type="text" name="weapon' + n + '_type"></td>' +
+        '<td><textarea class="spec" rows="1" name="weapon' + n + '_spec"></textarea></td>';
+      weaponBody.appendChild(row);
+      const spec = row.querySelector('textarea.spec');
+      spec.addEventListener('input', function(){ autosizeSpec(spec); });
+      return row;
+    }
+    function ensureWeaponRows(fields){
+      let max = 0;
+      Object.keys(fields).forEach(function(name){
+        const match = /^weapon(\d+)_/.exec(name);
+        if(match) max = Math.max(max, parseInt(match[1], 10));
+      });
+      while(weaponBody.children.length < max) addWeaponRow();
+    }
+    document.getElementById('addWeaponRow').addEventListener('click', function(){
+      const row = addWeaponRow();
+      autosizeSpec(row.querySelector('textarea.spec'));
+      row.querySelector('input').focus();
+      saveState();
     });
 
     const sheet = document.querySelector('.sheet');
