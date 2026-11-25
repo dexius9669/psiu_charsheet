@@ -272,9 +272,13 @@
 
   .traits-list .equip-line span{ font-family: var(--font-head); font-size:.85rem; }
 
-  .spell-columns{ display:grid; grid-template-columns:2fr .6fr 1fr 1fr; gap:.65rem; }
-  .spell-columns > div{ min-width:0; }
-  @media(max-width:540px){ .spell-columns{ grid-template-columns:1.3fr 1fr; } }
+  .magic-table{ width:100%; table-layout:fixed; border-collapse:collapse; }
+  .magic-table th{ text-align:left; font-size:.85rem; font-weight:normal; overflow-wrap:anywhere; }
+  .magic-table th:first-child{ width:36%; }
+  .magic-table th:nth-child(2){ width:13%; }
+  .magic-table td, .magic-table th{ padding:.2rem; vertical-align:top; }
+  .magic-table input{ min-width:0; }
+  .add-magic-row{ margin:.4rem 0 .8rem; }
 
   /* ---------- footer ---------- */
   .actions{ margin-top: 1.5rem; display:flex; gap:.75rem; flex-wrap:wrap; }
@@ -475,7 +479,6 @@
           </div>
         </div>
       </div>
-      <p class="hint" style="margin:8px 0 0;">Всё оружие наносит 1 ранение; магическое даёт свой «плюс» к ранениям. Атака: 2к6 + владение оружием, успех на 8+; владение даёт +1, без владения — 0, −1 или −2. Тяжёлое — две руки и защита цели −1; бастард в двух руках считается тяжёлым. Две шестёрки — опциональный Кубик Крови.</p>
     </div>
   </div>
 
@@ -503,7 +506,6 @@
         </div>
         <label><input type="checkbox" id="noHelm" name="noHelm"> Без закрытого шлема</label>
         <div class="status-line" id="defenseTotal"></div>
-        <p class="hint" style="margin:8px 0 0;">Защита: 2к6 + доспех/щит, 9+; урон принимает доспех или щит. Незачарованный доспех — только от физического урона; магия, ментальное и жизненная сила проходят. Спасбросок от магии — только в зачарованном доспехе или со щитом. Без закрытого шлема тяжёлый/сверхтяжёлый — на ступень ниже, нагрузка прежняя.</p>
       </div>
     </div>
     <div>
@@ -524,7 +526,6 @@
             <input type="text" name="shieldMagic" placeholder="если зачарован">
           </div>
         </div>
-        <p class="hint" style="margin:8px 0 0;">Щит ситуативен: удар с фланга, цепом или со спины может его обойти. Баклер +1 только в ближнем бою, но не от стрелковых атак · щит +1 · тяжёлый щит +2.</p>
       </div>
     </div>
   </div>
@@ -560,16 +561,11 @@
     <p class="hint">Сотворение — 2к6 с модификатором: 12 — все четыре условия · 9–11 — три · 6–8 — два · 3–5 — одно · 2 — катастрофа.</p>
     <p class="hint">Условия: желаемый эффект · без истощения · ничего странного вокруг · без значительных побочных эффектов.</p>
     <div class="panel">
-      <div class="spell-columns">
-        <div><label class="field-label" for="spells">Заклинание</label>
-          <textarea rows="5" id="spells" name="spells"></textarea></div>
-        <div><label class="field-label" for="circle">Круг</label>
-          <textarea rows="5" id="circle" name="circle"></textarea></div>
-        <div><label class="field-label" for="range">Дальность</label>
-          <textarea rows="5" id="range" name="range"></textarea></div>
-        <div><label class="field-label" for="duration">Длительность</label>
-          <textarea rows="5" id="duration" name="duration"></textarea></div>
-      </div>
+      <table class="magic-table" aria-label="Заклинание — записи" data-rows="8">
+        <thead><tr><th scope="col" data-field="spells">Заклинание</th><th scope="col" data-field="circle">Круг</th><th scope="col" data-field="range">Дальность</th><th scope="col" data-field="duration">Длительность</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
 
       <div class="pip-config">
         <label for="exhMax">Истощение (предел до игры, обычно 4):</label>
@@ -586,8 +582,11 @@
     <div class="section-title">Служитель</div>
     <div class="panel">
       <div class="grid-2"><div class="field"><label class="field-label" for="rank">Ранг</label><input id="rank" name="rank" type="text"></div><div class="field"><label class="field-label" for="vow">Обет / поручение</label><input id="vow" name="vow" type="text"></div></div>
-      <label class="field-label" for="miracles">Известные Чудеса</label>
-      <textarea rows="3" id="miracles" name="miracles"></textarea>
+      <table class="magic-table" aria-label="Чудо — записи" data-rows="7">
+        <thead><tr><th scope="col" data-field="miracles">Чудо</th><th scope="col" data-field="miracleRank">Ранг</th><th scope="col" data-field="miracleRange">Дальность</th><th scope="col" data-field="miracleDuration">Длительность</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <button type="button" class="add-magic-row secondary no-print">Добавить строку</button>
       <label><input type="checkbox" name="omen"> Знамение сегодня уже истолковано</label>
       <p class="hint">Послушнику доступны вдохновение, Знамения и изгнание Нечисти. Одно толкование Знамения в день.</p>
     </div>
@@ -823,11 +822,52 @@
     }
   }
 
+  function addMagicRow(table){
+    const body = table.querySelector('tbody');
+    const row = document.createElement('tr');
+    body.appendChild(row);
+    for(const heading of table.querySelectorAll('th')){
+      const cell = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.dataset.column = heading.dataset.field;
+      input.setAttribute('aria-label', heading.textContent + ', строка ' + body.children.length);
+      cell.appendChild(input);
+      row.appendChild(cell);
+    }
+    return row;
+  }
+
+  function buildMagicTables(fields){
+    for(const table of document.querySelectorAll('.magic-table')){
+      const columns = Array.from(table.querySelectorAll('th'), function(heading){
+        return (fields[heading.dataset.field] || '').split(/\r?\n/);
+      });
+      const count = Math.max(Number(table.dataset.rows), ...columns.map(column => column.length));
+      for(let i = 0; i < count; i++){
+        const row = addMagicRow(table);
+        columns.forEach((values, j) => { row.children[j].firstChild.value = values[i] || ''; });
+      }
+      table.nextElementSibling.addEventListener('click', function(){
+        const row = addMagicRow(table);
+        row.children[0].firstChild.focus();
+      });
+    }
+  }
+
   function collectState(){
     const state = { fields: {}, wounds: 0, exhaustion: 0, equipOverflow: equipOverflow };
     document.querySelectorAll('.sheet [name]').forEach(function(el){
       state.fields[el.name] = (el.type === 'checkbox') ? el.checked : el.value;
     });
+    // Оставляем формат прежних сохранений: одна строка текста на запись в колонке.
+    for(const table of document.querySelectorAll('.magic-table')){
+      for(const heading of table.querySelectorAll('th')){
+        const key = heading.dataset.field;
+        const values = Array.from(table.querySelectorAll('[data-column="' + key + '"]'), input => input.value);
+        state.fields[key] = values.join('\n').replace(/\n+$/, '');
+      }
+    }
     state.wounds = document.querySelectorAll('#woundPips input:checked').length;
     state.exhaustion = Number(document.getElementById('exhCount').value);
     return state;
@@ -900,6 +940,7 @@
     setExhMax(exhMax.value);
 
     const saved = loadState();
+    buildMagicTables(saved && saved.fields || {});
     if(saved) applyState(saved);
     else renderEquip(currentCapacity());
     updateLoad();
